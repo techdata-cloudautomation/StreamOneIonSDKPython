@@ -58,7 +58,7 @@ for customer in customers:
     "customerName": "John Doe",
     "customerEmail": "john.doe@example.com",
     "customerTitle": "Mr",
-    "customerPhone": "1234567890",
+    "customerPhone": "123456789",
     "createTime": "2024-06-03T09:55:19Z",
     "updateTime": "2024-06-03T09:55:20Z",
     "languageCode": "EN",
