@@ -7,14 +7,18 @@ This is a Python SDK for interacting with the StreamOne API.
 To install the SDK, run the following command:
 
 ```bash
-pip install .
+pip install StreamOneSDK
 ```
 
 ## Authentication
 
-The StreamOne Ion API uses Basic HTTP Authentication. You will use the StreamOne Ion API Key as the Username and API Secret as the Password in your requests.
+The StreamOne Ion API supports two authentication methods, depending on the API version:
 
-The API Key and API Secret can be found in your Admin Portal account. After logging into your Admin Portal account, select the Settings option from either the landing page (distributor view) or from the menu on the top right of the screen (partner view). Under Account settings, select the first tab Account Information. API Key and API Secret will display at the bottom of the page. You can view existing API keys or generate new ones.
+- **v1 API:** Uses Basic HTTP Authentication. The API Key is used as the Username and the API Secret as the Password.  
+  You can find or generate your API Key and Secret in the Admin Portal under **Settings > Account Information**. See [official docs](https://docs.streamone.cloud/#authentication) for details.
+
+- **v3 API:** Uses OAuth 2.0 Bearer tokens. You will need an `access_token` and `refresh_token`, which can be obtained via the StreamOne Ion authentication flow.  
+  See [official docs](https://docs.streamone.cloud/#authentication) for more information.
 
 ## Configuration
 
@@ -46,9 +50,40 @@ client = StreamOneClient(config='path/to/config.json')
 
 ---
 
-# v1 API (Deprecated Soon)
+# v1 API (Partial Deprecation Notice)
 
-**Note:** The v1 API will be deprecated soon. Please migrate to the v3 API.
+> **Note:** The v1 API is being deprecated for customer-related endpoints.  
+> - **v1 Customers:** Deprecated soon—please migrate to v3.  
+> - **v1 Invoices:** Still required, as there is currently no v3 alternative for invoicing.
+
+**Scope:**  
+- Use **v1** only for invoicing and customer data.  
+- Use **v3** for all other endpoints (products, subscriptions, reports, orders, etc).
+
+For more details, see the [StreamOne API documentation](https://docs.streamone.cloud/#introduction).
+
+## How `relations` Work (v1)
+
+The StreamOne Ion API allows you to customize which related entities are included in the response using the `relations` parameter.
+
+- The `relations` parameter specifies which related entities (e.g., `invoices`, `group`, `customFieldsValues`) should be included in the API response for the requested entity.
+- You can specify multiple related entities as a comma-separated string (when using the API directly), or as a list in the SDK.
+- If `relations` is set to an empty string, no related entities will be returned.
+- By default, depending on the entity, some, all, or none of the related objects may be included in the response.
+
+
+
+**Example (SDK usage):**
+```python
+relations = [
+    'invoices',
+    'group'
+]
+entities = client.get_customers_v1(relations=relations)
+```
+
+This reduces the number of API calls by embedding related data directly in the response.  
+See [official docs](https://docs.streamone.cloud/#relations) for more.
 
 ## Getting My Invoices (v1)
 
@@ -225,6 +260,10 @@ The StreamOne Ion API offers the possibility to customize the returned fields fo
 ---
 
 # v3 API
+
+**Scope:**  
+- Use v3 for all endpoints except invoicing.
+- The SDK is focused on retrieving data and generating reports.
 
 ## Initializing the Client
 
