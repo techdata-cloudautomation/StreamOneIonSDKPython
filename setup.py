@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name='streamoneionsdk',
-    version='0.1.3',
+    name='streamOneIonSDK',
+    version='0.1.5',
     packages=find_packages(),
     install_requires=[
         'requests',
