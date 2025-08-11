@@ -1,271 +1,4 @@
-# StreamOne SDK
-
-This is a Python SDK for interacting with the StreamOne API.
-
-## Installation
-
-To install the SDK, run the following command:
-
-```bash
-pip install StreamOneIONSDK
-```
-
-## Authentication
-
-The StreamOne Ion API supports two authentication methods, depending on the API version:
-
-- **v1 API:** Uses Basic HTTP Authentication. The API Key is used as the Username and the API Secret as the Password.  
-  You can find or generate your API Key and Secret in the Admin Portal under **Settings > Account Information**. See [official docs](https://docs.streamone.cloud/#authentication) for details.
-
-- **v3 API:** Uses OAuth 2.0 Bearer tokens. You will need an `access_token` and `refresh_token`, which can be obtained via the StreamOne Ion authentication flow.  
-  See [official docs](https://docs.streamone.cloud/#authentication) for more information.
-
-## Configuration
-
-The SDK requires a configuration file in JSON format. The structure of the configuration file should be as follows:
-
-```json
-{
-  "v1": {
-    "api_key": "your_v1_api_key",
-    "api_secret": "your_v1_api_secret"
-  },
-  "v3": {
-    "access_token": "your_v3_access_token",
-    "refresh_token": "your_v3_refresh_token"
-  },
-  "accountid": "your_account_id"
-}
-```
-
-## Usage
-
-### Initializing the Client
-
-```python
-from StreamOneIONSDK.client import StreamOneClient
-
-client = StreamOneClient(config='path/to/config.json')
-```
-
----
-
-# v1 API (Partial Deprecation Notice)
-
-> **Note:** The v1 API is being deprecated for customer-related endpoints.
->
-> - **v1 Customers:** Deprecated soon—please migrate to v3.
-> - **v1 Invoices:** Still required, as there is currently no v3 alternative for invoicing.
-
-**Scope:**
-
-- Use **v1** only for invoicing and customer data.
-- Use **v3** for all other endpoints (products, subscriptions, reports, orders, etc).
-
-For more details, see the [StreamOne API documentation](https://docs.streamone.cloud/#introduction).
-
-## How `relations` Work (v1)
-
-The StreamOne Ion API allows you to customize which related entities are included in the response using the `relations` parameter.
-
-- The `relations` parameter specifies which related entities (e.g., `invoices`, `group`, `customFieldsValues`) should be included in the API response for the requested entity.
-- You can specify multiple related entities as a comma-separated string (when using the API directly), or as a list in the SDK.
-- If `relations` is set to an empty string, no related entities will be returned.
-- By default, depending on the entity, some, all, or none of the related objects may be included in the response.
-
-**Example (SDK usage):**
-
-```python
-relations = [
-    'invoices',
-    'group'
-]
-entities = client.get_customers_v1(relations=relations)
-```
-
-This reduces the number of API calls by embedding related data directly in the response.  
-See [official docs](https://docs.streamone.cloud/#relations) for more.
-
-## Getting My Invoices (v1)
-
-```python
-filters = {
-    'billingStartDate': {'value': '2025-01-01', 'modifier': 'gte'},
-    'billingEndDate': {'value': '2025-02-01', 'modifier': 'lt'},
-}
-sort = {
-    'id': 'asc',
-    'cloudUsed': 'desc'
-}
-relations = [
-    'lines'
-]
-invoices = client.get_my_invoices(filters=filters, sort=sort, limit=1000, offset=0, relations=relations)
-print(invoices)
-```
-
-## Getting Customer Invoices (v1)
-
-```python
-customer_id = '12345'  # Replace with actual customer ID
-filters = {
-    'billingStartDate': {'value': '2024-12-01', 'modifier': 'gt'},
-}
-customer_invoices = client.get_customer_invoices(customer_id=customer_id, filters=filters, limit=100, offset=0)
-print(customer_invoices)
-```
-
-## Getting Detailed Invoice Data (v1)
-
-```python
-detailed_invoice = client.get_detailed_invoice_data(invoice_id='123', save_folder='path/to/save/folder')
-print(detailed_invoice)
-```
-
-## Getting Customers (v1)
-
-```python
-filters = {
-    'email': {'value': 'xyz@abc.com'},
-}
-relations = [
-    'customFieldsValues'
-]
-customers = client.get_customers_v1(filters=filters, relations=relations, limit=100, offset=0)
-print(customers)
-```
-
-## Generating Invoices (v1)
-
-```python
-response = client.generate_invoices(source='aws', period='m-01-2025')
-print(response)
-```
-
-## Filtering Results (v1)
-
-When requesting a list of entities, the results can be filtered by the values of different fields of the requested entity.
-
-The filter modifier is optional and, when present, changes the way the filter value is used to filter the entities. Possible values are:
-
-| Filter  | Description                                                                 |
-| ------- | --------------------------------------------------------------------------- |
-| exact   | (default) The entity field value must be the same as the filter value       |
-| partial | The entity field value may only partially match the filter value.           |
-| gt      | Matches all values that are greater than the filter value                   |
-| lt      | Matches all values that are lower than the filter value                     |
-| gte     | Matches all values that are greater than or equal to the filter value       |
-| lte     | Matches all values that are lower than or equal to the filter value         |
-| min     | Matches all values that are greater than or equal to the filter value (gte) |
-| max     | Matches all values that are lower than or equal to the filter value (lte)   |
-
-### Creating the Filtering Dictionary (v1)
-
-To create the filtering dictionary, use the following format:
-
-```python
-filters = {
-    'FIELD_NAME': {'value': 'FIELD_VALUE', 'modifier': 'MODIFIER'}
-}
-```
-
-- `FIELD_NAME`: The name of the field to filter by.
-- `FIELD_VALUE`: The value to filter by.
-- `MODIFIER`: The filter modifier (optional). If not provided, the default is `exact`.
-
-Example:
-
-The following filters will find all the entities with name “John Doe” in the group with ID=23:
-
-```python
-filters = {
-    'name': {'value': 'John Doe'},
-    'groupId': {'value': '23'}
-}
-```
-
-The following filters will find all the entities that have the name starting with "Jo":
-
-```python
-filters = {
-    'name': {'value': 'Jo%', 'modifier': 'partial'}
-}
-```
-
-## Sorting Results (v1)
-
-You can specify the sort fields using the sort parameter.
-
-### Creating the Sorting Dictionary (v1)
-
-To create the sorting dictionary, use the following format:
-
-```python
-sort = {
-    'FIELD_NAME': 'asc|desc'
-}
-```
-
-- `FIELD_NAME`: The name of the field to sort by.
-- `asc|desc`: The sort order, either `asc` for ascending or `desc` for descending.
-
-Example:
-
-The following sorting dictionary will sort the results first by name ascending, then by company descending:
-
-```python
-sort = {
-    'name': 'asc',
-    'company': 'desc'
-}
-```
-
-## Paging the Results (v1)
-
-The number of results per request can be limited using the limit parameter and the results offset within the entire results set can be specified using the offset parameter. Using these two parameters you can paginate the results for a large list of entities.
-
-By default, the limit parameter is set to 100 and the offset parameter is set to 0 (zero).
-
-## Creating the Relations List (v1)
-
-**Note:** The `relations` parameter is limited to the v1 API.
-
-To create the relations list, use the following format:
-
-```python
-relations = [
-    'RELATED_ENTITY_1',
-    'RELATED_ENTITY_2'
-]
-```
-
-- `RELATED_ENTITY_1`, `RELATED_ENTITY_2`: The names of the related entities to return.
-
-Example:
-
-The following relations list will include the related invoices and group entities:
-
-```python
-relations = [
-    'invoices',
-    'group'
-]
-```
-
----
-
-## Customizing the Results
-
-The StreamOne Ion API offers the possibility to customize the returned fields for the requested entities.
-
----
-
-# v3 API
-
-**Scope:**
-
-- Use v3 for all endpoints except invoicing.
-- The SDK is focused on retrieving data and generating reports.
+# StreamOne SDK v3 API
 
 ## Initializing the Client
 
@@ -307,6 +40,34 @@ for customer in customers:
     print(customer)
 ```
 
+### Sample Response
+
+```json
+[
+  {
+    "id": "1",
+    "name": "accounts/0/customers/1",
+    "customerOrganization": "DC 3 June 2024",
+    "customerAddress": {
+      "street": "123 Main St",
+      "city": "Sample City",
+      "state": "Sample State",
+      "zip": "12345",
+      "country": "US"
+    },
+    "customerName": "John Doe",
+    "customerEmail": "john.doe@example.com",
+    "customerTitle": "Mr",
+    "customerPhone": "123456789",
+    "createTime": "2024-06-03T09:55:19Z",
+    "updateTime": "2024-06-03T09:55:20Z",
+    "languageCode": "EN",
+    "uid": "askjd8721nkas",
+    "customerStatus": "ACTIVE"
+  }
+]
+```
+
 ## Getting a Specific Customer
 
 ```python
@@ -327,12 +88,69 @@ for product in client.list_products(page_size=3):
 
 #### Sample Response
 
+````python
 ```json
 {
   "name": "accounts/123/products/FakeProduct-es",
+  "type": "SUBSCRIPTION_PRODUCT",
+  "categories": ["accounts/123/categories/Fake-Category"],
+  "hasPublishedVersions": true,
+  "marketing": {
+    "description": "Fake Product is a scalable service platform designed to modernize applications, accelerate deployment, and drive digital transformation. It includes architecture for various environments and tools to manage resources effectively.",
+    "displayName": "Fake Product on Cloud",
+    "caption": "Scalable Service Platform on Cloud",
+    "defaultImage": {
+      "title": "Logo",
+      "content": "https://fake-storage.com/fake-data/products/FakeProduct-es/images/logo.png",
+      "type": "MEDIA_TYPE_IMAGE"
+    }
+  },
+  "definition": {
+    "supportedCurrencies": ["USD"],
+    "billingMode": "POSTPAY",
+    "features": [
+      { "id": "Cost-effective", "displayName": "Cost effective" },
+      { "id": "Developer-friendly", "displayName": "Developer friendly" },
+      { "id": "Flexible", "displayName": "Flexible" },
+      { "id": "Corporate-control", "displayName": "Corporate control" }
+    ],
+    "skus": [
+      {
+        "id": "sku--Fake-Product-on-Cloud-n0",
+        "displayName": "Fake Product on Cloud",
+        "description": "Based on Usage",
+        "cancelTiming": "END_OF_TERM",
+        "plans": [
+          {
+            "id": "plan--Fake-Product-on-Cloud-n0",
+            "displayName": "Fake Product on Cloud",
+            "billingPeriod": "MONTHLY",
+            "phases": [{ "type": "UNLIMITED_PHASE", "recurringPrice": { "USD": 0 } }],
+            "icon": "https://fake-storage.com/fake-data/products/FakeProduct-es/images/plan_icon.png",
+            "supportPlan": {},
+            "priceDisplay": "PRICE_DISPLAY_SHOW_PLAN"
+          }
+        ],
+        "productCloudProviderName": "accounts/123/cloudProviders/1",
+        "disabled": true,
+        "supportPlanAsProductPlan": { "details": {} }
+      }
+    ],
+    "customFields": [
+      { "name": "productType", "content": "fakeType", "type": "STRING" },
+      { "name": "solutionName", "content": "FakeSolutionV1", "type": "STRING" },
+      { "name": "region", "content": "FAKE_REGION", "type": "STRING" },
+      { "name": "ProvisioningCategory", "content": "FakeCategory", "type": "STRING" },
+      { "name": "disablePriceAdjustment", "content": "true", "type": "STRING" },
+      { "name": "skip-price-book", "content": "true", "type": "STRING" }
+    ]
+  },
+  "isSharedProduct": true,
+  "etag": "FAKE_ETAG",
+  "createTime": "2024-01-01T00:00:00Z",
   "updateTime": "2024-01-02T00:00:00Z"
 }
-```
+````
 
 ## Getting Product Details
 
@@ -347,12 +165,57 @@ print(product_detail)
 
 #### Sample Response
 
+````python
 ```json
 {
   "id": "FAKE-ID-12345",
+  "name": "accounts/999/products/FAKE-PRODUCT",
+  "type": "SUBSCRIPTION_PRODUCT",
+  "categories": [
+    "accounts/999/categories/FAKE-CATEGORY"
+  ],
+  "hasPublishedVersions": true,
+  "idsInUse": [
+    "FAKE-ID-12345",
+    "Fake-Plan-1",
+    "Fake-Plan-2"
+  ],
+  "termUid": "FAKE-TERM-UID-12345",
+  "previewAuthToken": "/+blob-signature+/FAKE-TOKEN-12345+FAKE-TOKEN-67890=",
+  "etag": "FAKE-ETAG-12345",
+  "tagsValues": [
+    {
+      "name": "accounts/999/product/tags/999/value/1001",
+      "displayName": "Fake Tag 1",
+      "tagDisplayName": "tag",
+      "tagName": "accounts/999/product/tags/999"
+    },
+    {
+      "name": "accounts/999/product/tags/999/value/1002",
+      "displayName": "Fake Tag 2",
+      "tagDisplayName": "tag",
+      "tagName": "accounts/999/product/tags/999"
+    },
+    {
+      "name": "accounts/999/product/tags/999/value/1003",
+      "displayName": "Fake Tag 3",
+      "tagDisplayName": "tag",
+      "tagName": "accounts/999/product/tags/999"
+    },
+    {
+      "name": "accounts/999/product/tags/999/value/1004",
+      "displayName": "Fake Tag 4",
+      "tagDisplayName": "tag",
+      "tagName": "accounts/999/product/tags/999"
+    }
+  ],
+  "createTime": "2020-01-01T00:00:00Z",
+  "updateTime": "2025-01-01T00:00:00Z",
   "legacyProductId": "FAKE-LEGACY-ID-12345"
 }
-```
+````
+
+````
 
 ## Listing Subscriptions
 
@@ -434,17 +297,62 @@ The `startDateRange.relativeDateRange` and `endDateRange.relativeDateRange` para
 ```python
 subscriptions = client.list_subscriptions(
     customerId="12345",
+    subscriptionStatus="ACTIVE",
+    startDateRange={"relativeDateRange": "MONTH_TO_DATE"},
     pageSize=5
 )
 for subscription in subscriptions:
     print(subscription)
-```
+````
 
 ### Sample Response
 
 ```json
 {
   "id": "5555",
+  "customerId": "12345",
+  "resellerId": "222",
+  "isvId": "222",
+  "cloudProviderId": "99",
+  "subscriptionId": "abc12345-def6-7890-ghij-klmnopqrstuv",
+  "subscriptionName": "Fake Subscription Plan",
+  "resourceType": "FAKE::Resource",
+  "ccpProductId": "FAKEPROD-001",
+  "ccpSkuId": "FAKESKU-002",
+  "ccpPlanId": "FakePlan-003",
+  "subscriptionProductId": "FAKEPRODID",
+  "subscriptionSkuId": "FAKESKUID",
+  "subscriptionOfferId": "FAKEPRODID:FAKESKUID:FAKEOFFERID",
+  "unitType": "Licenses",
+  "subscriptionStatus": "active",
+  "subscriptionPurchasedDate": "2024-02-01T00:00:00Z",
+  "subscriptionStartDate": "2024-02-01T00:00:00Z",
+  "subscriptionEndDate": "2025-02-01T00:00:00Z",
+  "cancellationAllowedUntilDate": "2024-02-10T00:00:00Z",
+  "subscriptionBillingType": "license",
+  "subscriptionBillingCycle": "monthly",
+  "subscriptionBillingTerm": "P1M",
+  "subscriptionRenewStatus": "ENABLED",
+  "ccpProductInfo": {
+    "productId": "FAKEPROD-001",
+    "productDisplayName": "Fake Product",
+    "skuId": "FAKESKU-002",
+    "skuDisplayName": "Fake SKU",
+    "planId": "FakePlan-003",
+    "planDisplayName": "Fake Plan"
+  },
+  "isTrial": false,
+  "autoRenew": true,
+  "customerName": "Fake Customer",
+  "partnerName": "Fake Partner",
+  "lastUpdatedDate": "2024-02-01T00:00:00Z",
+  "price": 49.99,
+  "cost": 39.99,
+  "currency": "USD",
+  "margin": 10,
+  "total": 49.99,
+  "msrp": 60.0,
+  "renewalDate": "2025-02-01T00:00:00Z",
   "mfgPartNumber": "FAKEPRODID:FAKESKUID:P1M:M"
 }
 ```
@@ -468,6 +376,7 @@ The `get_customer_subscription_details` method retrieves details of a specific s
 ```python
 subscription_details = client.get_customer_subscription_details(
     customerId="1",
+    subscriptionId="59a53ae5-9abf-4002-dbbc-714dee01dffd",
     refresh=True
 )
 print(subscription_details)
@@ -478,6 +387,50 @@ print(subscription_details)
 ```json
 {
   "id": "9999",
+  "customerId": "1",
+  "resellerId": "888",
+  "isvId": "888",
+  "cloudProviderId": "77",
+  "subscriptionId": "59a53ae5-9abf-4002-dbbc-714dee01dffd",
+  "subscriptionName": "Fake Subscription",
+  "resourceType": "FAKE::Resource",
+  "ccpProductId": "FAKEPROD-123",
+  "ccpSkuId": "FAKESKU-456",
+  "ccpPlanId": "FakePlan-789",
+  "subscriptionProductId": "FAKEPRODID",
+  "subscriptionSkuId": "FAKESKUID",
+  "subscriptionOfferId": "FAKEPRODID:FAKESKUID:FAKEOFFERID",
+  "unitType": "Licenses",
+  "subscriptionStatus": "active",
+  "subscriptionPurchasedDate": "2024-01-01T00:00:00Z",
+  "subscriptionStartDate": "2024-01-01T00:00:00Z",
+  "subscriptionEndDate": "2025-01-01T00:00:00Z",
+  "cancellationAllowedUntilDate": "2024-01-10T00:00:00Z",
+  "subscriptionBillingType": "license",
+  "subscriptionBillingCycle": "monthly",
+  "subscriptionBillingTerm": "P1M",
+  "subscriptionRenewStatus": "ENABLED",
+  "activityLogs": {},
+  "ccpProductInfo": {
+    "productId": "FAKEPROD-123",
+    "productDisplayName": "Fake Product",
+    "skuId": "FAKESKU-456",
+    "skuDisplayName": "Fake SKU",
+    "planId": "FakePlan-789",
+    "planDisplayName": "Fake Plan"
+  },
+  "isTrial": false,
+  "autoRenew": true,
+  "customerName": "Fake Customer",
+  "partnerName": "Fake Partner",
+  "lastUpdatedDate": "2024-01-01T00:00:00Z",
+  "price": 99.99,
+  "cost": 89.99,
+  "currency": "USD",
+  "margin": 10,
+  "total": 99.99,
+  "msrp": 120.0,
+  "renewalDate": "2025-01-01T00:00:00Z",
   "mfgPartNumber": "FAKEPRODID:FAKESKUID:P1M:M"
 }
 ```
@@ -542,6 +495,9 @@ The `get_report_data_csv` method allows you to fetch report data in CSV format a
 ```python
 csv_path = client.get_report_data_csv(
     report_id="12345",
+    report_module="REPORTS_REPORTS_MODULE",
+    category="BILLING_REPORTS",
+    relative_date_range="MONTH_TO_DATE",
     path="billing_report.csv"
 )
 print(f"Report saved to: {csv_path}")
@@ -581,6 +537,38 @@ for order in orders:
 ```json
 {
   "name": "accounts/123/customers/4567/orders/891011",
+  "referenceId": "customers/4567/carts/112",
+  "displayName": "Cart - 1715100000000",
+  "userId": "5432",
+  "userName": "Test User Account",
+  "userEmail": "testuser@example.com",
+  "status": "ON_HOLD",
+  "currencyCode": "EUR",
+  "cartId": "112",
+  "orderItems": [
+    {
+      "name": "accounts/123/customers/4567/orders/891011/orderItems/121314",
+      "referenceId": "customers/4567/cartItems/151",
+      "action": "CREATE",
+      "productId": "GenericProd-DB",
+      "skuId": "Fake-Software-Database-Lrg",
+      "planId": "Standard-Monthly-Plan",
+      "quantity": 2,
+      "providerName": "UNSPECIFIED",
+      "cartItemId": "151",
+      "status": "ACTIVE",
+      "additionalInformation": "new_system",
+      "createTime": "2023-01-15T09:30:00Z",
+      "updateTime": "2025-03-10T10:15:30Z",
+      "isEligibleForPromo": "VERIFIED",
+      "productName": "Fake Corp Generic Database Service",
+      "skuName": "Fake Corp Premium Database License",
+      "planName": "Fake Corp Premium Database License",
+      "productOwnerCountryCode": "DE"
+    }
+  ],
+  "createTime": "2023-01-15T09:29:50Z",
+  "updateTime": "2023-01-15T09:35:10Z",
   "scheduledAt": "2023-01-15T09:35:10Z"
 }
 ```
@@ -602,19 +590,58 @@ The `list_account_orders` method allows you to fetch report data in CSV format a
 ### Example
 
 ```python
-# Example usage for fetching customer order data
-orders = client.list_account_orders(customer_id=10, page_size=10, status="COMPLETED")
+orders = client.list_customer_orders(
+    customer_id=1,
+    page_size="10",
+    status="ON_HOLD",
+)
 for order in orders:
-    print(order)
+  print(order)
+```
+
+### Sample Response
+
+```json
+{
+  "name": "accounts/123/customers/1/orders/891011",
+  "referenceId": "customers/4567/carts/112",
+  "displayName": "Cart - 1715100000000",
+  "userId": "5432",
+  "userName": "Test User Account",
+  "userEmail": "testuser@example.com",
+  "status": "ON_HOLD",
+  "currencyCode": "EUR",
+  "cartId": "112",
+  "orderItems": [
+    {
+      "name": "accounts/123/customers/4567/orders/891011/orderItems/121314",
+      "referenceId": "customers/4567/cartItems/151",
+      "action": "CREATE",
+      "productId": "GenericProd-DB",
+      "skuId": "Fake-Software-Database-Lrg",
+      "planId": "Standard-Monthly-Plan",
+      "quantity": 2,
+      "providerName": "UNSPECIFIED",
+      "cartItemId": "151",
+      "status": "ACTIVE",
+      "additionalInformation": "new_system",
+      "createTime": "2023-01-15T09:30:00Z",
+      "updateTime": "2025-03-10T10:15:30Z",
+      "isEligibleForPromo": "VERIFIED",
+      "productName": "Fake Corp Generic Database Service",
+      "skuName": "Fake Corp Premium Database License",
+      "planName": "Fake Corp Premium Database License",
+      "productOwnerCountryCode": "DE"
+    }
+  ],
+  "createTime": "2023-01-15T09:29:50Z",
+  "updateTime": "2023-01-15T09:35:10Z",
+  "scheduledAt": "2023-01-15T09:35:10Z"
+}
 ```
 
 ---
 
-## Response Format
+## API Documentation
 
-StreamOne Ion API offers two encoding formats for the response: JSON and XML. By default, the responses are encoded in JSON but you can change that using the Accept request header:
-
-```http
-Accept: text/xml
-Accept: application/json (default)
-```
+For more details, refer to the [StreamOne API Documentation](https://docs.streamone.cloud/#end-customer).
