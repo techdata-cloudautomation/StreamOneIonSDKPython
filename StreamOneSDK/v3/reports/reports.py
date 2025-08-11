@@ -1,6 +1,6 @@
 import requests
 from typing import Dict, List, Optional, Union
-from ...exceptions import StreamOneSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
+from ...exceptions import StreamOneIONSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
 import datetime
 import csv
 from requests import Response
@@ -70,12 +70,12 @@ class ReportsV3:
         headers = self._get_headers()
         url = f"{self.base_url}/api/v3/accounts/{self.account_id}/reports/{report_id}/reportDataCsv"
         specs = {
-            "date_range_option": {"select_date_range": relative_date_range}
+            "date_range_option": {"selected_range": {"relative_date_range": relative_date_range}}
         } if relative_date_range else {
-            "date_range_option": {"fixed_date_range": {
+            "date_range_option": {"selected_range": {"fixed_date_range": {
                 "start_date": start_date,
                 "end_date": end_date
-            }}
+            }}}
         }
 
         payload = {

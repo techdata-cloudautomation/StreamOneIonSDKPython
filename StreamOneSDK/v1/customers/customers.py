@@ -2,7 +2,7 @@ import requests
 import warnings
 import base64
 from typing import Dict, List, Optional, Union
-from ...exceptions import StreamOneSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
+from ...exceptions import StreamOneIONSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
 
 class CustomersV1:
     def __init__(self, base_url: str, api_key: str, api_secret: str):

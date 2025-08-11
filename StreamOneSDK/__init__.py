@@ -1,4 +1,4 @@
 from .client import StreamOneClient
-from .exceptions import StreamOneSDKException
+from .exceptions import StreamOneIONSDKException
 
-__all__ = ['StreamOneClient', 'StreamOneSDKException']
+__all__ = ['StreamOneClient', 'StreamOneIONSDKException']

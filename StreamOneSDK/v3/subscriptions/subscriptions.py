@@ -1,6 +1,6 @@
 import requests
 from typing import Dict, Optional, Union, List
-from ...exceptions import StreamOneSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
+from ...exceptions import StreamOneIONSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
 
 
 class SubscriptionsV3:

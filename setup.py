@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='StreamOneSDK',
-    version='0.1.2',
+    name='StreamOneIONSDK',
+    version='0.1.4',
     packages=find_packages(),
     install_requires=[
         'requests',

@@ -3,7 +3,7 @@ import base64
 import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Union
-from ...exceptions import StreamOneSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
+from ...exceptions import StreamOneIONSDKException, BadRequestError, AuthenticationError, AuthorizationError, NotFoundError, ServerError
 
 
 class BillingV1:
