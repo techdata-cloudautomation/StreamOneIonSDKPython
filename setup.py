@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='streamOneIonSDK',
-    version='0.1.5',
+    version='0.1.6',
     packages=find_packages(),
     install_requires=[
         'requests',
@@ -16,5 +16,6 @@ setup(
         ],
     },
     long_description=long_description,
-    long_description_content_type="text/markdown",  # or "text/x-rst" if using reStructuredText
+    # or "text/x-rst" if using reStructuredText
+    long_description_content_type="text/markdown",
 )

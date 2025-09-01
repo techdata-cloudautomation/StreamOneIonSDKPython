@@ -1,8 +1,9 @@
 import json
+import os
 from typing import Dict, List, Optional, Union
 import requests
 import datetime
-from .exceptions import StreamOneIONSDKException, AuthenticationError, AuthorizationError, BadRequestError, NotFoundError, ServerError  
+from .exceptions import StreamOneIONSDKException, AuthenticationError, AuthorizationError, BadRequestError, NotFoundError, ServerError
 from .v1.customers.customers import CustomersV1
 from .v1.billing.billing import BillingV1
 from .v3.customers.customers import CustomersV3
@@ -33,17 +34,17 @@ class StreamOneClient:
 
         if ('v1' not in env_data and 'v3' not in env_data) or "accountid" not in env_data:
             raise StreamOneIONSDKException("Configuration must include either v1 or v3 credentials. Example structure:\n"
-                                        "{\n"
-                                        "    \"v1\": {\n"
-                                        "        \"api_key\": \"your_v1_api_key\",\n"
-                                        "        \"api_secret\": \"your_v1_api_secret\"\n"
-                                        "    },\n"
-                                        "    \"v3\": {\n"
-                                        "        \"access_token\": \"your_v3_access_token\",\n"
-                                        "        \"refresh_token\": \"your_v3_refresh_token\"\n"
-                                        "    },\n"
-                                        "    \"accountid\": \"your_account_id\"\n"
-                                        "}")
+                                           "{\n"
+                                           "    \"v1\": {\n"
+                                           "        \"api_key\": \"your_v1_api_key\",\n"
+                                           "        \"api_secret\": \"your_v1_api_secret\"\n"
+                                           "    },\n"
+                                           "    \"v3\": {\n"
+                                           "        \"access_token\": \"your_v3_access_token\",\n"
+                                           "        \"refresh_token\": \"your_v3_refresh_token\"\n"
+                                           "    },\n"
+                                           "    \"accountid\": \"your_account_id\"\n"
+                                           "}")
         self.account_id = env_data.get("accountid")
         if 'v1' in env_data:
             v1api_key = env_data['v1']["api_key"]
@@ -108,38 +109,32 @@ class StreamOneClient:
         )
         if validate_response.status_code == 200:
             return
-        elif validate_response.status_code == 401:
-            # Token is invalid or expired, proceed to refresh
-            pass
-        elif validate_response.status_code == 400:
-            raise BadRequestError(f"Bad request during access token validation: {validate_response.text}")
-        elif validate_response.status_code == 403:
-            raise AuthorizationError(f"Not authorized during access token validation: {validate_response.text}")
-        elif 500 <= validate_response.status_code < 600:
-            raise ServerError(f"Server error during access token validation: {validate_response.text}")
-        else:
-            raise StreamOneIONSDKException(f"Unexpected error during access token validation: {validate_response.text}")
 
         # Refresh the token
         response = requests.post(
             self.v3_base_url + "/oauth/token",
             data={
                 "grant_type": "refresh_token",
-                "redirect_uri": "http://localhost/",
+                # "redirect_uri": "http://localhost/",
                 "refresh_token": config["v3"]["refresh_token"]
             },
             headers={"content-type": "application/x-www-form-urlencoded"}
         )
         if response.status_code == 401:
-            raise AuthenticationError(f"Authentication failed during token refresh: {response.text}")
+            raise AuthenticationError(
+                f"Authentication failed during token refresh: {response.text}")
         elif response.status_code == 400:
-            raise BadRequestError(f"Bad request during token refresh: {response.text}")
+            raise BadRequestError(
+                f"Bad request during token refresh: {response.text}")
         elif response.status_code == 403:
-            raise AuthorizationError(f"Not authorized during token refresh: {response.text}")
+            raise AuthorizationError(
+                f"Not authorized during token refresh: {response.text}")
         elif 500 <= response.status_code < 600:
-            raise ServerError(f"Server error during token refresh: {response.text}")
+            raise ServerError(
+                f"Server error during token refresh: {response.text}")
 
         token_data = response.json()
+
         if not token_data.get("access_token"):
             raise AuthenticationError(
                 f"Failed to refresh access token: {response.text}")
@@ -149,6 +144,8 @@ class StreamOneClient:
         # Update instance variables
         self.v3_access_token = token_data["access_token"]
         self.v3_refresh_token = token_data["refresh_token"]
+        print(self.v3_access_token)
+        print(self.v3_refresh_token)
         self.subscriptions_v3 = SubscriptionsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
         self.customers_v3 = CustomersV3(
@@ -175,7 +172,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v1 credentials are not configured.
         """
         if not self.billing_v1:
-            raise StreamOneIONSDKException("v1 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v1 credentials are not configured.")
         return self.billing_v1.get_my_invoices(filters, sort, limit, offset, relations)
 
     def get_customer_invoices(self, customer_id: str, filters: Optional[Dict[str, Dict[str, str]]] = None, limit: int = 100, offset: int = 0) -> Union[Dict, List]:
@@ -195,7 +193,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v1 credentials are not configured.
         """
         if not self.billing_v1:
-            raise StreamOneIONSDKException("v1 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v1 credentials are not configured.")
         return self.billing_v1.get_customer_invoices(customer_id, filters, limit, offset)
 
     def get_detailed_invoice_data(self, invoice_id: str, save_folder: str) -> None:
@@ -213,7 +212,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v1 credentials are not configured.
         """
         if not self.billing_v1:
-            raise StreamOneIONSDKException("v1 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v1 credentials are not configured.")
         return self.billing_v1.get_detailed_invoice_data(invoice_id, save_folder)
 
     def get_customers_v1(self, customer_id: Optional[str] = None, filters: Optional[Dict[str, Dict[str, str]]] = None, relations: Optional[List[str]] = None, limit: int = 100, offset: int = 0) -> Union[Dict, List]:
@@ -234,7 +234,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v1 credentials are not configured.
         """
         if not self.customers_v1:
-            raise StreamOneIONSDKException("v1 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v1 credentials are not configured.")
         return self.customers_v1.get_customers(customer_id, filters, relations, limit, offset)
 
     def generate_invoices(self, source: str, period: Optional[str] = None, status: str = 'open', customers: Optional[List[str]] = None, resellers: Optional[List[str]] = None, sendEmails: bool = False) -> Union[Dict, List]:
@@ -256,7 +257,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v1 credentials are not configured.
         """
         if not self.billing_v1:
-            raise StreamOneIONSDKException("v1 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v1 credentials are not configured.")
         return self.billing_v1.generate_invoices(source, period, status, customers, resellers, sendEmails)
 
     def list_customers(self, pageSize: int = 1, customerEmail: Optional[str] = None, languageCode: Optional[str] = None, customerStatus: Optional[str] = None, customerName: Optional[str] = None) -> iter:
@@ -277,7 +279,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.customers_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.customers_v3 = CustomersV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -298,7 +301,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.customers_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.customers_v3 = CustomersV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -369,7 +373,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.subscriptions_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.subscriptions_v3 = SubscriptionsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -417,7 +422,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.subscriptions_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.subscriptions_v3 = SubscriptionsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -444,7 +450,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.reports_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.reports_v3 = ReportsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -470,7 +477,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.reports_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.reports_v3 = ReportsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -491,7 +499,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.orders_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.orders_v3 = OrdersV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -513,7 +522,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.orders_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.orders_v3 = OrdersV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -541,7 +551,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.products_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.products_v3 = ProductsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
@@ -570,7 +581,8 @@ class StreamOneClient:
             StreamOneIONSDKException: If v3 credentials are not configured.
         """
         if not self.products_v3:
-            raise StreamOneIONSDKException("v3 credentials are not configured.")
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
         self.refresh_access_token()
         self.products_v3 = ProductsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
