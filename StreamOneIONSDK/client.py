@@ -144,8 +144,6 @@ class StreamOneClient:
         # Update instance variables
         self.v3_access_token = token_data["access_token"]
         self.v3_refresh_token = token_data["refresh_token"]
-        print(self.v3_access_token)
-        print(self.v3_refresh_token)
         self.subscriptions_v3 = SubscriptionsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
         self.customers_v3 = CustomersV3(
