@@ -4,6 +4,7 @@ from ...exceptions import StreamOneIONSDKException, BadRequestError, Authenticat
 import datetime
 import csv
 from requests import Response
+import re
 
 
 class ReportsV3:
@@ -19,6 +20,12 @@ class ReportsV3:
         }
 
     def list_reports(self, module: Optional[str] = "REPORTS_MODULE_UNSPECIFIED") -> List[Dict]:
+        """
+        Fetches a list of available reports for the specified module.
+
+        :param module: The module to filter reports by. Defaults to "REPORTS_MODULE_UNSPECIFIED".
+        :return: A list of dictionaries containing report metadata.
+                """
         headers = self._get_headers()
         params = {"module": module}
 
@@ -27,7 +34,26 @@ class ReportsV3:
             headers=headers,
             params=params
         )
+
         return self._handle_response(response)
+
+    def get_report(self, report_id: str) -> Dict:
+        """
+        Fetches the details of a specific report by its ID.
+
+        :param report_id: The ID of the report to retrieve.
+        :return: A dictionary containing the report details.
+        """
+        headers = self._get_headers()
+
+        response = requests.get(
+            f"{self.base_url}/api/v3/accounts/{self.account_id}/reports/{report_id}",
+            headers=headers,
+        )
+        if response.status_code != 200:
+            return self._handle_response(response)
+        else:
+            return response.json()
 
     def _handle_response(self, response: requests.Response) -> Union[Dict, List]:
         if response.status_code == 200:
@@ -55,7 +81,18 @@ class ReportsV3:
             file.write(text_data)
         return path
 
-    def get_report_data_csv(self, report_id: str, report_module: str, category: str, start_date: str = None, end_date: str = None, relative_date_range: str = "MONTH_TO_DATE", path="") -> requests.Response:
+    def _create_columns_list(self, columns):
+        def camel_to_snake(name):
+            s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+            return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+        new_columns = []
+        for col in columns:
+            new_col = {camel_to_snake(k): v for k, v in col.items()}
+            new_columns.append(new_col)
+        return new_columns
+
+    def get_report_data_csv(self, report_id: str, start_date: str = None, end_date: str = None, relative_date_range: str = "MONTH_TO_DATE", path="", columns=None) -> requests.Response:
         """
         Fetches the report data in CSV format.
 
@@ -67,6 +104,7 @@ class ReportsV3:
         :param relative_date_range: A relative date range (e.g.,"UNKNOWN_RELATIVE_DATE_RANGE", "CUSTOM", "TODAY", "MONTH_TO_DATE", "QUARTER_TO_DATE", "YEAR_TO_DATE", "LAST_MONTH", "LAST_QUARTER", "LAST_YEAR", "LATEST_MONTH", "WEEK_TO_DATE", "LAST_WEEK", "TWO_MONTHS_AGO").
         :return: Path to the csv file with the data.
         """
+
         headers = self._get_headers()
         url = f"{self.base_url}/api/v3/accounts/{self.account_id}/reports/{report_id}/reportDataCsv"
         specs = {
@@ -78,10 +116,13 @@ class ReportsV3:
             }}}
         }
 
+        report = self.get_report(report_id)
+
+        specs["selectedColumns"] = report["specs"]["allColumns"]
         payload = {
-            "report_id": report_id,
-            "report_module": report_module,
-            "category": category,
+            "reportId": report_id,
+            "report_module": report["reportModule"],
+            "category": report["category"],
             "specs": specs,
         }
 

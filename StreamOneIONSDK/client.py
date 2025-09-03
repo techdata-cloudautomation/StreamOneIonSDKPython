@@ -427,6 +427,21 @@ class StreamOneClient:
             self.v3_base_url, self.v3_access_token, self.account_id)
         return self.subscriptions_v3.get_customer_subscription_details(customerId, subscriptionId, refresh)
 
+    def get_report(self, report_id):
+        """
+        Fetches the details of a specific report by its ID.
+
+        :param report_id: The ID of the report to retrieve.
+        :return: A dictionary containing the report details.
+        """
+        if not self.reports_v3:
+            raise StreamOneIONSDKException(
+                "v3 credentials are not configured.")
+        self.refresh_access_token()
+        self.reports_v3 = ReportsV3(
+            self.v3_base_url, self.v3_access_token, self.account_id)
+        return self.reports_v3.get_report(report_id)
+
     def list_reports(self, module: Optional[str] = "REPORTS_MODULE_UNSPECIFIED") -> List[Dict]:
         """
         List all report specifications for the given module.
@@ -455,7 +470,7 @@ class StreamOneClient:
             self.v3_base_url, self.v3_access_token, self.account_id)
         return self.reports_v3.list_reports(module)
 
-    def get_report_data_csv(self, report_id: str, report_module: str, category: str, start_date: str = None, end_date: str = None, relative_date_range: str = "MONTH_TO_DATE", path: str = "") -> requests.Response:
+    def get_report_data_csv(self, report_id: str,  start_date: str = None, end_date: str = None, relative_date_range: str = "MONTH_TO_DATE", path: str = "") -> requests.Response:
         """
         Fetches the report data in CSV format.
 
@@ -480,7 +495,7 @@ class StreamOneClient:
         self.refresh_access_token()
         self.reports_v3 = ReportsV3(
             self.v3_base_url, self.v3_access_token, self.account_id)
-        return self.reports_v3.get_report_data_csv(report_id, report_module, category, start_date=start_date, end_date=end_date, relative_date_range=relative_date_range, path=path)
+        return self.reports_v3.get_report_data_csv(report_id, start_date=start_date, end_date=end_date, relative_date_range=relative_date_range, path=path)
 
     def list_account_orders(self, page_size: Optional[int] = None, status: Optional[str] = None) -> iter:
         """

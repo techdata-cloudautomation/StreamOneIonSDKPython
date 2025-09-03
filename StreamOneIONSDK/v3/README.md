@@ -480,23 +480,19 @@ The `get_report_data_csv` method allows you to fetch report data in CSV format a
 
 ### Parameters
 
-| Parameter           | Data Type | Description                                                               | Example                  | Required |
-| ------------------- | --------- | ------------------------------------------------------------------------- | ------------------------ | -------- |
-| report_id           | String    | The ID of the report.                                                     | `12345`                  | Yes      |
-| report_module       | String    | The module that uses the reports service.                                 | `REPORTS_REPORTS_MODULE` | Yes      |
-| category            | String    | The type of report produced.                                              | `BILLING_REPORTS`        | Yes      |
-| start_date          | String    | The start date for the report data in ISO 8601 format.                    | `2024-01-01T00:00:00Z`   | No       |
-| end_date            | String    | The end date for the report data in ISO 8601 format.                      | `2024-01-31T23:59:59Z`   | No       |
-| relative_date_range | String    | A relative date range (e.g., `MONTH_TO_DATE`, `LAST_MONTH`).              | `MONTH_TO_DATE`          | No       |
-| path                | String    | The file path where the CSV data will be saved. Defaults to `report.csv`. | `path/to/report.csv`     | No       |
+| Parameter           | Data Type | Description                                                               | Example                | Required |
+| ------------------- | --------- | ------------------------------------------------------------------------- | ---------------------- | -------- |
+| report_id           | String    | The ID of the report.                                                     | `12345`                | Yes      |
+| start_date          | String    | The start date for the report data in ISO 8601 format.                    | `2024-01-01T00:00:00Z` | No       |
+| end_date            | String    | The end date for the report data in ISO 8601 format.                      | `2024-01-31T23:59:59Z` | No       |
+| relative_date_range | String    | A relative date range (e.g., `MONTH_TO_DATE`, `LAST_MONTH`).              | `MONTH_TO_DATE`        | No       |
+| path                | String    | The file path where the CSV data will be saved. Defaults to `report.csv`. | `path/to/report.csv`   | No       |
 
 ### Example
 
 ```python
 csv_path = client.get_report_data_csv(
     report_id="12345",
-    report_module="REPORTS_REPORTS_MODULE",
-    category="BILLING_REPORTS",
     relative_date_range="MONTH_TO_DATE",
     path="billing_report.csv"
 )
